@@ -1,0 +1,59 @@
+# IDE
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle / Java
+.gradle/
+build/
+bin/
+out/
+*.class
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+
+# Environment
+.env
+.env.local
+.env.*.local
+# Config & Secrets
+
+services/messaging-server/src/main/resources/application.properties
+services/messaging-server/src/main/resources/application.yml
+*.keystore
+*.jks
+*.pem
+*.key
+
+# Database
+*.db
+*.sqlite
+
+# Uploads
+services/media-server/uploads/*
+!services/media-server/uploads/.gitkeep
+
+# Docker
+.docker/
+
+# Build outputs
+dist/

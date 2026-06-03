@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.7'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.chat'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot REST API
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.1.7'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.1.7'
+    implementation 'org.springframework.boot:spring-boot-starter-security:3.1.7'
+
+    // PostgreSQL Driver
+    implementation 'org.postgresql:postgresql:42.7.1'
+    
+    // JWT Token 
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    
+    // WebSocket + Netty
+    implementation 'io.netty:netty-all:4.1.108.Final'
+
+    // JSON Processing
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.17.1')
+
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
