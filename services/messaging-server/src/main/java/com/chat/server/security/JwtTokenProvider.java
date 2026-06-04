@@ -1,14 +1,16 @@
-package com.chat.server.auth;
+package com.chat.server.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+
+import jakarta.annotation.PostConstruct;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
 
 /**
  * JWT Token Provider
@@ -24,6 +26,13 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    private SecretKey verificationKey;
+
+    @PostConstruct
+    public void init() {
+        this.verificationKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
     /**
      * Generate JWT token for authenticated user
      * @param userId UUID of the user
@@ -31,14 +40,12 @@ public class JwtTokenProvider {
      * @return JWT token string
      */
     public String generateToken(String userId, String username) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        
         return Jwts.builder()
                 .claim("userId", userId)
                 .claim("username", username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(key, SignatureAlgorithm.HS512)
+                .setIssuedAt(new Date()) // 👈 Uses 'setIssuedAt' in older versions
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration)) // 👈 Uses 'setExpiration'
+                .signWith(verificationKey) 
                 .compact();
     }
 
@@ -49,9 +56,8 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
+            Jwts.parserBuilder() // 👈 older versions use parserBuilder()
+                    .setSigningKey(verificationKey)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -66,12 +72,11 @@ public class JwtTokenProvider {
      * @return userId claim
      */
     public String getUserIdFromToken(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(verificationKey)
                 .build()
                 .parseClaimsJws(token)
-                .getBody();
+                .getBody(); // 👈 Uses getBody() instead of getPayload()
         return claims.get("userId", String.class);
     }
 
@@ -81,9 +86,8 @@ public class JwtTokenProvider {
      * @return username claim
      */
     public String getUsernameFromToken(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(verificationKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

@@ -2,6 +2,10 @@ package com.chat.server.protocol;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * PacketSerializer is a utility class for converting packet objects to JSON strings and vice versa.
+ * It uses Jackson's ObjectMapper for serialization and deserialization.
+ */
 public class PacketSerializer {
 
     private static final ObjectMapper mapper = new ObjectMapper();

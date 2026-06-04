@@ -1,10 +1,7 @@
 package com.chat.server;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
-
-import com.chat.server.auth.JwtTokenProvider;
+import org.springframework.boot.SpringApplication;
 
 import java.util.logging.Logger;
 
@@ -16,9 +13,8 @@ import java.util.logging.Logger;
 public class ChatApplication {
     private static final Logger logger = Logger.getLogger(ChatApplication.class.getName());
 
-
     public static void main(String[] args) {
-        ConfigurableApplicationContext springContext = SpringApplication.run(ChatApplication.class, args);
+        SpringApplication.run(ChatApplication.class, args);
 
         logger.info("\n===============================================");
         logger.info("Spring Boot REST API started on port 8081");
@@ -31,11 +27,7 @@ public class ChatApplication {
         try {
             logger.info("Starting Health Check Server on port 9090...");
             HealthCheckServer.start();
-            
-            logger.info("Starting Netty WebSocket Server...");
-            JwtTokenProvider jwtTokenProvider = springContext.getBean(JwtTokenProvider.class);
-            
-            ChatServer.startNettyServer(jwtTokenProvider);
+            logger.info("Starting Netty WebSocket Server on port 8080...");
         } catch (Exception e) {
             logger.severe("Failed to start server: " + e.getMessage());
             e.printStackTrace();

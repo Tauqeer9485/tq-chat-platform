@@ -1,6 +1,6 @@
 package com.chat.server.handler;
 
-import com.chat.server.auth.JwtTokenProvider;
+import com.chat.server.security.JwtTokenProvider;
 import com.chat.server.util.ChannelAttributes;
 import com.chat.server.util.JwtUtil;
 

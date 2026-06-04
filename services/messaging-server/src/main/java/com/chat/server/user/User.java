@@ -1,6 +1,11 @@
 package com.chat.server.user;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
 
 /**
  * User entity for authentication and user management
@@ -24,7 +29,7 @@ public class User {
     private String password;
 
     @Column(nullable = false, unique = true)
-    private String userId; // UUID for WebSocket session linking
+    private String userId;
 
     private String phone;
 

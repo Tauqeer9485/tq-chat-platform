@@ -6,6 +6,10 @@ import com.chat.server.packet.type.MessageStatus;
 import com.chat.server.packet.type.PacketType;
 import com.chat.server.session.UserId;
 
+/**
+ * MessagePacket represents a chat message sent from client to server or server to client.
+ * It contains all necessary information about the message, including sender, content, timestamps, and status.
+ */
 public class MessagePacket extends BasePacket {
 
     private long messageId;

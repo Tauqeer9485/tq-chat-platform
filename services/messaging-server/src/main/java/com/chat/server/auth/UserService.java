@@ -1,12 +1,14 @@
 package com.chat.server.auth;
 
+import com.chat.server.security.JwtTokenProvider;
 import com.chat.server.user.User;
 import com.chat.server.user.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 /**
  * User Service

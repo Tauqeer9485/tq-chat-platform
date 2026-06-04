@@ -3,6 +3,10 @@ package com.chat.server.packet.base;
 import com.chat.server.packet.type.PacketType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * BasePacket is the parent class for all packet types sent between client and server.
+ * It contains common fields and serves as a base for specific packet implementations.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BasePacket {
 

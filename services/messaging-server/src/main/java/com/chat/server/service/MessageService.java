@@ -7,17 +7,24 @@ import com.chat.server.session.SessionManager;
 import com.chat.server.session.UserId;
 
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.springframework.stereotype.Service;
 
 /**
  * Service for processing and delivering messages.
  */
+@Service
 public class MessageService {
     private static final Logger logger = Logger.getLogger(MessageService.class.getName());
     
-    private final ConversationService conversationService = ConversationService.getInstance();
+    private final ConversationService conversationService;
     
+    public MessageService(ConversationService conversationService) {
+        this.conversationService = conversationService;
+    }
+
     /**
      * Process an incoming message packet and deliver to all members in conversation.
      * Validates sender, serializes message, and sends to all recipients.
@@ -29,13 +36,13 @@ public class MessageService {
             logger.warning("Null packet received in processMessage");
             return;
         }
+        
         if (packet.getConversationId() == null || packet.getConversationId().isEmpty()) {
             logger.warning("Packet has invalid conversationId");
             return;
         }
 
         packet.setServerTimestamp(System.currentTimeMillis());
-
         packet.setStatus(MessageStatus.DELIVERED);
 
         boolean validMember = conversationService.isMember(packet.getConversationId(), packet.getSenderId());
