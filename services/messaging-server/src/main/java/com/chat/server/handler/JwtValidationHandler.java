@@ -4,6 +4,7 @@ import com.chat.server.security.JwtTokenProvider;
 import com.chat.server.util.ChannelAttributes;
 import com.chat.server.util.JwtUtil;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -75,9 +76,16 @@ public class JwtValidationHandler extends ChannelInboundHandlerAdapter {
 
                 String userId = jwtTokenProvider.getUserIdFromToken(token);
                 String username = jwtTokenProvider.getUsernameFromToken(token);
+                List<String> scopes = jwtTokenProvider.getScopesFromToken(token);
 
-                if (userId == null || username == null) {
+                if (userId == null || username == null || scopes == null) {
                     logger.warning("[JWT-VALIDATION] Rejected: Could not extract userId/username from token");
+                    sendUnauthorizedResponse(ctx);
+                    return;
+                }
+
+                if (!scopes.contains("websocket:connect")) {
+                    logger.warning("[JWT-VALIDATION] Rejected: Token does not have websocket:connect scope");
                     sendUnauthorizedResponse(ctx);
                     return;
                 }
