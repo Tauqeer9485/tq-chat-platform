@@ -44,6 +44,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/ws").permitAll()
+                    .requestMatchers("/api/auth/tokens/exchange").authenticated()
                     .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -3,7 +3,17 @@ package com.chat.server.auth;
 import com.chat.server.auth.dto.AuthResponse;
 import com.chat.server.auth.dto.LoginRequest;
 import com.chat.server.auth.dto.SignupRequest;
+import com.chat.server.auth.dto.TokenExchangeRequest;
+import com.chat.server.security.JwtTokenProvider;
 import com.chat.server.user.User;
+import com.chat.server.util.JwtUtil;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +29,10 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
 
     public AuthController(UserService userService) {
         this.userService = userService;
@@ -69,7 +83,6 @@ public class AuthController {
             );
 
             return ResponseEntity.ok(response);
-
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthResponse(false, "Login failed: " + e.getMessage()));
@@ -136,7 +149,6 @@ public class AuthController {
             );
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new AuthResponse(false, "Signup failed: " + e.getMessage()));
@@ -179,14 +191,106 @@ public class AuthController {
             );
 
             AuthResponse response = new AuthResponse(true, "Token valid", request.getToken(), userInfo);
-            return ResponseEntity.ok(response);
 
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new AuthResponse(false, "Server error: " + e.getMessage()));
         }
     }
 
+    
+    /**
+     * GET /api/auth/.well-known/jwks.json
+     * Return JWKS metadata for public keys used to sign JWTs. This is used by clients to verify token signatures.
+     * Response:
+     * {
+     *   "keys": [
+     *     {
+     *       "kty": "RSA",
+     *       "kid": "key-id",
+     *       "use": "sig",
+     *       "alg": "RS256",
+     *       "n": "base64url-modulus",
+     *       "e": "base64url-exponent"
+     *     }
+     *   ]
+     * }
+     */
+    @GetMapping("/.well-known/jwks.json")
+    public ResponseEntity<Map<String, Object>> getJwks() {
+        try {
+            Map<String, Object> jwksKeyJson = tokenProvider.getPublicJwksDetails();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("keys", Collections.singletonList(jwksKeyJson));
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * POST /api/auth/tokens/exchange
+     * Exchange a low-privilege long-lived session token for an ultra-short-lived, tightly scoped token.
+     * * Request Header: 
+     * Authorization: Bearer <Standard_Long_Lived_Token>
+     * * Request Body:
+     * { 
+     *   "scopes": ["messaging:connect"] 
+     * } 
+     * or 
+     * {
+     *   "scopes": ["media:write", "media:read"] 
+     * }
+     */
+    @PostMapping("tokens/exchange")
+    public ResponseEntity<?> exchangeToken(@RequestHeader("Authorization") String authHeader, @RequestBody TokenExchangeRequest tokenRequest) {
+        try {
+            String sessionToken = JwtUtil.extractTokenFromAuthHeader(authHeader);
+            if (sessionToken == null || !tokenProvider.validateToken(sessionToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Invalid or expired session credentials"));
+            }
+
+            if (tokenRequest.getScopes() == null || tokenRequest.getScopes().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "Missing required field: scopes"));
+            }
+
+            String userId = tokenProvider.getUserIdFromToken(sessionToken);
+            String username = tokenProvider.getUsernameFromToken(sessionToken);
+
+            long tokenLifespanMs = determineLifespan(tokenRequest.getScopes());
+
+            String shortLivedToken = tokenProvider.generateShortLivedToken(userId, username, tokenRequest.getScopes(), tokenLifespanMs);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Short-lived scoped token issued successfully");
+            response.put("token", shortLivedToken);
+            response.put("expiresIn", tokenLifespanMs);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Server error processing token exchange: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Determine token lifespan based on requested scopes.
+     */
+    private long determineLifespan(List<String> scopes) {
+        if (scopes.contains("messaging:connect")) {
+            return 60000L; 
+        }
+        
+        return 900000L;
+    }
+    
     /**
      * Token Request DTO for verify endpoint
      */

@@ -59,6 +59,16 @@ services:
       - media_uploads:/app/uploads
     environment:
       NODE_ENV: development
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tq_chat
+      DB_USER: admin
+      DB_PASSWORD: password
+      JWKS_URI: http://messaging-server:8081/api/auth/.well-known/jwks.json
+      JWT_AUDIENCE: media-service
+    depends_on:
+      - postgres
     networks:
       - chat-network
 
