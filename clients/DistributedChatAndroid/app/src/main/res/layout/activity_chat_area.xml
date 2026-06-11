@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F9F9F9"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- AppBar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/chatToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#FFFFFF"
+        android:title=""
+        android:titleTextColor="@android:color/white"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:titleCentered="true" />
+
+    <!-- Chat messages -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/messageRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:layout_marginBottom="70dp"
+        android:background="#F9F9F9"
+        android:clipToPadding="true"
+        android:paddingBottom="12dp"
+        android:paddingRight="12dp"
+        android:paddingLeft="12dp"
+        android:paddingTop="0dp"
+        android:clipChildren="true"
+        android:clipToOutline="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:layout_constraintTop_toBottomOf="@id/chatToolbar" />
+
+    <LinearLayout
+        android:id="@+id/message_input_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@android:color/transparent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Message box: includes attachment, input, and camera under rounded bg -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:background="@drawable/input_bg"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:minHeight="40dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!-- Attachment Icon -->
+            <ImageView
+                android:id="@+id/btn_attachment"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="Attach file"
+                android:src="@drawable/ic_attachment" />
+
+            <!-- Message input container -->
+            <LinearLayout
+                android:id="@+id/message_input_wrapper"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/msg_box_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="8dp">
+
+                <!-- Text Input -->
+                <EditText
+                    android:id="@+id/messageInput"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Write your message"
+                    android:inputType="textMultiLine"
+                    android:maxLines="5"
+                    android:textColor="@android:color/black"
+                    android:textSize="14sp" />
+            </LinearLayout>
+            <!-- Camera Icon -->
+            <ImageView
+                android:id="@+id/btn_camera"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Open camera"
+                android:src="@drawable/ic_camera" />
+
+        </LinearLayout>
+
+        <!-- Mic + Send (outside rounded box) -->
+        <FrameLayout
+            android:id="@+id/mic_wrapper"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!-- Background bubble while recording -->
+            <View
+                android:id="@+id/mic_background"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_recording_mic"
+                android:visibility="gone" />
+
+            <!-- Mic Icon -->
+            <ImageView
+                android:id="@+id/btn_mic"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_mic"
+                android:scaleType="centerInside"
+                android:visibility="visible" />
+
+            <!-- Send Icon -->
+            <ImageView
+                android:id="@+id/btn_send"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_menu_send"
+                android:contentDescription="Send"
+                android:scaleType="centerInside"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

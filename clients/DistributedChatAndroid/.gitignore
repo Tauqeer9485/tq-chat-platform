@@ -1,0 +1,19 @@
+# Gradle and Android build outputs
+.gradle/
+build/
+**/build/
+.externalNativeBuild/
+.cxx/
+captures/
+
+# IDE configurations and user-specific workspace files
+*.iml
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# Local developer overrides
+local.properties
