@@ -1,11 +1,11 @@
 package com.chat.server;
 
-import com.chat.server.dispatcher.PacketDispatcher;
-import com.chat.server.handler.packet.MessagePacketHandler;
-import com.chat.server.handler.packet.PingPacketHandler;
-import com.chat.server.packet.base.BasePacket;
-import com.chat.server.packet.chat.MessagePacket;
-import com.chat.server.packet.type.PacketType;
+import com.chat.server.protocol.base.BasePacket;
+import com.chat.server.protocol.chat.MessagePacket;
+import com.chat.server.protocol.dispatcher.PacketDispatcher;
+import com.chat.server.protocol.handler.MessagePacketHandler;
+import com.chat.server.protocol.handler.PingPacketHandler;
+import com.chat.server.protocol.type.PacketType;
 import com.chat.server.security.JwtTokenProvider;
 import com.chat.server.service.MessageService;
 

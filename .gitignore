@@ -15,11 +15,20 @@ Thumbs.db
 # Gradle / Java
 .gradle/
 build/
+**/build/
 bin/
 out/
 *.class
 *.jar
 !**/gradle/wrapper/gradle-wrapper.jar
+
+# Android specific root-level exclusions
+**/local.properties
+**/captures/
+clients/DistributedChatAndroid/.idea/caches/
+clients/DistributedChatAndroid/.idea/workspace.xml
+clients/DistributedChatAndroid/.idea/navEditor.xml
+clients/DistributedChatAndroid/.idea/assetWizardSettings.xml
 
 # Logs
 *.log

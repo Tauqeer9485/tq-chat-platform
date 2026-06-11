@@ -26,8 +26,7 @@ POST /api/auth/signup
   "username": "user01",
   "email": "user@example.com",
   "password": "password123",
-  "username": "username"
-}
+  "confirmPassword": "password123"
 Response: { "token": "jwt-token", "user": { ... } }
 ```
 

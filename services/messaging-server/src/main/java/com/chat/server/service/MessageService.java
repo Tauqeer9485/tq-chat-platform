@@ -1,10 +1,11 @@
 package com.chat.server.service;
 
-import com.chat.server.packet.chat.MessagePacket;
-import com.chat.server.packet.type.MessageStatus;
-import com.chat.server.session.Session;
-import com.chat.server.session.SessionManager;
-import com.chat.server.session.UserId;
+import com.chat.server.core.conversation.ConversationService;
+import com.chat.server.network.session.Session;
+import com.chat.server.network.session.SessionManager;
+import com.chat.server.network.session.UserId;
+import com.chat.server.protocol.chat.MessagePacket;
+import com.chat.server.protocol.type.MessageStatus;
 
 import java.util.Set;
 import java.util.logging.Level;

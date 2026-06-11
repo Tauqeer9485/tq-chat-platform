@@ -1,10 +1,10 @@
 package com.chat.server;
 
-import com.chat.server.dispatcher.PacketDispatcher;
-import com.chat.server.handler.HttpRequestCaptureHandler;
-import com.chat.server.handler.JwtValidationHandler;
-import com.chat.server.handler.ServerHandler;
-import com.chat.server.handler.WebSocketAuthHandler;
+import com.chat.server.network.handler.HttpRequestCaptureHandler;
+import com.chat.server.network.handler.JwtValidationHandler;
+import com.chat.server.network.handler.ServerHandler;
+import com.chat.server.network.handler.WebSocketAuthHandler;
+import com.chat.server.protocol.dispatcher.PacketDispatcher;
 import com.chat.server.security.JwtTokenProvider;
 
 import io.netty.channel.ChannelInitializer;

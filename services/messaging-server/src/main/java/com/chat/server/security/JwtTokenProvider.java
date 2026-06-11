@@ -3,6 +3,7 @@ package com.chat.server.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import jakarta.annotation.PostConstruct;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -13,6 +14,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,11 +26,14 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class JwtTokenProvider {
+    
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
     private static final String KEY_ID = "chat-platform-key-id-v1";
+    private static final String TOKEN_PARAM_NAME = "token";
 
     private RSAPublicKey publicKey;
     private RSAPrivateKey privateKey;
@@ -146,7 +153,6 @@ public class JwtTokenProvider {
     public Map<String, Object> getPublicJwksDetails() {
         Map<String, Object> jwk = new HashMap<>();
         
-        // Base64URL encode the standard components (omitting any trailing equals sign padding)
         String modulus = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.getModulus().toByteArray());
         String exponent = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.getPublicExponent().toByteArray());
 
@@ -158,5 +164,54 @@ public class JwtTokenProvider {
         jwk.put("e", exponent);
 
         return jwk;
+    }
+
+    /**
+     * Extract JWT token from WebSocket URI query parameters
+     * Expected format: /ws?token=eyJhbGc...
+     * 
+     * @param uri The request URI containing query parameters
+     * @return The token value, or null if not found
+     */
+    public static String extractTokenFromUri(String uri) {
+        try {
+            QueryStringDecoder queryDecoder = new QueryStringDecoder(uri);
+            Map<String, List<String>> params = queryDecoder.parameters();
+            
+            if (params.containsKey(TOKEN_PARAM_NAME)) {
+                List<String> tokens = params.get(TOKEN_PARAM_NAME);
+                if (!tokens.isEmpty()) {
+                    String token = tokens.get(0);
+                    if (token != null && !token.isEmpty()) {
+                        return token;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Error parsing URI for token: {}", e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract JWT token from Authorization header
+     * Expected format: "Bearer eyJhbGc..."
+     * 
+     * @param authHeader The Authorization header value
+     * @return The token value, or null if not in correct format
+     */
+    public static String extractTokenFromAuthHeader(String authHeader) {
+        if (authHeader == null) {
+            return null;
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = authHeader.substring(7).trim();
+
+        return token.isEmpty() ? null : token;
     }
 }
