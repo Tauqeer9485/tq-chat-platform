@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Distributed-Chat-Android</string>
+    <string name="camera_mode_video">Video</string>
+    <string name="camera_mode_photo">Photo</string>
+    <string name="camera_mode_video_note">Video Note</string>
+
+    <string name="cd_flip_camera">Switch between front and rear camera</string>
+    <string name="cd_flash_control">Toggle camera flash settings</string>
+    <string name="cd_shutter_button">Take photo or record video</string>
+    <string name="cd_gallery_shortcut">Open media gallery</string>
+
+    <string name="send">Send</string>
+    <string name="cancel">Cancel</string>
+    <string name="permission_denied_toast">Camera permission is required to send photos.</string>
 </resources>

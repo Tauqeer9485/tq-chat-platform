@@ -16,22 +16,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HomeActivity extends AppCompatActivity implements ConversationAdapter.OnConversationClickListener {
-    private RecyclerView rvConversations;
     private ConversationAdapter adapter;
     private List<Conversation> dataList;
-    private ConversationRepository conversationRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        conversationRepository = ConversationRepository.getInstance(this);
+        ConversationRepository conversationRepository = ConversationRepository.getInstance(this);
 
-        rvConversations = findViewById(R.id.rvConversations);
-        FloatingActionButton fabNewChat = findViewById(R.id.fabNewChat);
-
+        RecyclerView rvConversations = findViewById(R.id.rvConversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(this));
+
+        FloatingActionButton fabNewChat = findViewById(R.id.fabNewChat);
 
         dataList = new ArrayList<>();
         adapter = new ConversationAdapter(dataList, this);
@@ -41,12 +39,11 @@ public class HomeActivity extends AppCompatActivity implements ConversationAdapt
             if (conversations != null) {
                 dataList.clear();
                 dataList.addAll(conversations);
-
                 adapter.notifyDataSetChanged();
             }
         });
 
-        fabNewChat.setOnClickListener(v -> {
+        fabNewChat.setOnClickListener(view -> {
             Intent intent = new Intent(HomeActivity.this, NewChatActivity.class);
             startActivity(intent);
         });

@@ -1,30 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="4dp"
-    android:gravity="start"
-    android:orientation="horizontal">
+    android:paddingVertical="4dp">
 
-    <FrameLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/bubble"
-        android:layout_width="200dp"
-        android:layout_height="260dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginStart="8dp"
-        android:background="@drawable/bg_received"
-        android:foreground="?android:attr/selectableItemBackground"
         android:clickable="true"
-        android:focusable="true">
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:cardPreventCornerOverlap="false"
+        app:strokeWidth="4dp"
+        app:strokeColor="#EECEFF"
+        app:layout_constraintWidth_percent="0.68"
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:scaleType="centerCrop"
-            android:contentDescription=""
-            android:background="@drawable/bg_msg_received"/>
+            android:scaleType="center"
+            android:contentDescription="@null" />
 
         <FrameLayout
             android:id="@+id/overlay"
@@ -37,18 +43,18 @@
                 android:id="@+id/progressContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:orientation="vertical"
-                android:gravity="center"
-                android:layout_gravity="center">
+                android:gravity="center">
 
                 <ProgressBar
                     android:id="@+id/progressBar"
                     style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="140dp"
-                    android:layout_height="8dp"
+                    android:layout_width="130dp"
+                    android:layout_height="6dp"
                     android:max="100"
                     android:progress="0"
-                    android:indeterminate="false"/>
+                    android:indeterminate="false" />
 
                 <TextView
                     android:id="@+id/progressText"
@@ -56,50 +62,70 @@
                     android:layout_height="wrap_content"
                     android:text="0%"
                     android:textColor="@android:color/white"
-                    android:layout_marginTop="6dp"/>
+                    android:layout_marginTop="8dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/retryContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_gravity="center"
                 android:visibility="gone">
 
                 <ImageView
                     android:id="@+id/btnRetry"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:src="@drawable/ic_flip_camera"/>
+                    android:contentDescription="Retry"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_flip_camera" />
 
                 <ImageView
                     android:id="@+id/btnCancel"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_marginStart="12dp"
-                    android:src="@drawable/ic_close"/>
+                    android:layout_marginStart="16dp"
+                    android:contentDescription="Cancel"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close" />
             </LinearLayout>
         </FrameLayout>
 
-        <LinearLayout
-            android:id="@+id/timeLayout"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            android:layout_margin="6dp"
-            android:paddingRight="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_margin="0dp"
+            app:cardBackgroundColor="#400000a0"
+            app:shapeAppearanceOverlay="@style/TimeStampCorners"
+            app:cardElevation="0dp"
+            app:cardPreventCornerOverlap="false"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/timeText"
+            <LinearLayout
+                android:id="@+id/timeLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="11:56 AM"
-                android:textColor="#BFBFBF"
-                android:textSize="12sp"/>
-        </LinearLayout>
-    </FrameLayout>
-</LinearLayout>
+                android:layout_gravity="bottom|end"
+                android:layout_margin="0dp"
+                android:paddingHorizontal="6dp"
+                android:paddingBottom="4dp"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/timeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="11:56 AM"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:padding="2dp"
+                    android:layout_marginRight="2dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

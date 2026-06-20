@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.tq.distributed_chat_android.R;
+import com.tq.distributed_chat_android.data.remote.ChatWebSocketManager;
 import com.tq.distributed_chat_android.util.SessionManager;
 import com.tq.distributed_chat_android.data.remote.ApiClient;
 import com.tq.distributed_chat_android.data.remote.dto.AuthResponse;
@@ -119,6 +120,9 @@ public class MainActivity extends AppCompatActivity {
                             user.getUsername(),
                             user.getEmail()
                     );
+
+                    ChatWebSocketManager.getInstance(getApplicationContext(), null).connectWithAuthentication(res.body().getToken());
+
                     navigateToHome();
                 } else {
                     Toast.makeText(MainActivity.this, "Auth failed: " + res.code(), Toast.LENGTH_SHORT).show();
@@ -143,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> res) {
                 setLoading(false);
                 if (res.isSuccessful() && res.body() != null) {
-                    ApiClient.setAuthToken(res.body().getToken());
                     Toast.makeText(MainActivity.this, "Registration Successful!", Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(MainActivity.this, "Registration failed: " + res.code(), Toast.LENGTH_SHORT).show();

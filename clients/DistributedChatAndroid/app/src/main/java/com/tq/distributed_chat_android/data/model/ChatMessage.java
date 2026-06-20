@@ -24,7 +24,7 @@ public class ChatMessage {
     private final String content;
 
     private final String replyToMessageId;
-    private final String mediaUrl;
+    private  String mediaUrl;
     private final String fileName;
     private final long fileSize;
 
@@ -76,6 +76,8 @@ public class ChatMessage {
     public String getFileName() { return fileName; }
     public long getFileSize() { return fileSize; }
     public MessageStatus getStatus() { return status; }
+
+    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
 
     public void setStatus(MessageStatus status) { this.status = status; }
 }

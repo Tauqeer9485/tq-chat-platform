@@ -86,6 +86,7 @@ public class ChatWebSocketManager {
                             isExchangingToken = false;
                             if (response.isSuccessful() && response.body() != null) {
                                 establishWebSocketConnection(response.body().getToken());
+                                Log.e(TAG, "Token exchange successful. Token: " + response.body().getToken());
                             } else {
                                 Log.e(TAG, "Token exchange rejected by security cluster. Status Code: " + response.code());
                             }

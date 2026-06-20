@@ -39,7 +39,6 @@ public class SplashActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<VerifyResponse> call, Response<VerifyResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    ApiClient.setAuthToken(token);
                     redirectToHome();
                 } else {
                     sessionManager.clearSession();

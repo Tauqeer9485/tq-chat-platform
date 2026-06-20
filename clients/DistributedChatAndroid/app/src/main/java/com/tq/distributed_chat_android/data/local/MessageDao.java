@@ -28,6 +28,9 @@ public interface MessageDao {
     @Query("SELECT * FROM messages WHERE messageId = :messageId LIMIT 1")
     ChatMessage getMessageById(long messageId);
 
+    @Query("SELECT * FROM messages WHERE clientMessageId = :clientMessageId LIMIT 1")
+    ChatMessage getMessageByClientMId(String clientMessageId);
+
     @Query("DELETE FROM messages WHERE conversationId = :conversationId")
     void deleteConversationHistory(String conversationId);
 }

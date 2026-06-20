@@ -42,7 +42,7 @@ public interface AuthApiService {
             @Query("query") String query
     );
 
-    @POST("/api/auth/tokens/exchange")
+    @POST("api/auth/tokens/exchange")
     Call<TokenExchangeResponse> exchangeToken(
             @Header("Authorization") String longLivedBearerToken,
             @Body TokenExchangeRequest request

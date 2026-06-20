@@ -18,12 +18,14 @@ public interface ConversationDao {
     @Query("SELECT * FROM conversations ORDER BY timestamp DESC")
     LiveData<List<Conversation>> getAllConversations();
 
-    // Utility: Fetch only group chats or only direct messages for split-tab UI designs
     @Query("SELECT * FROM conversations WHERE conversationType = :type ORDER BY timestamp DESC")
     LiveData<List<Conversation>> getConversationsByType(String type);
 
     @Query("SELECT * FROM conversations WHERE conversationId = :conversationId LIMIT 1")
     Conversation getConversationById(String conversationId);
+
+    @Query("UPDATE conversations SET lastMessage = :lastMessage, timestamp = :timestamp WHERE conversationId = :conversationId")
+    void updateLastMessage(String conversationId, String lastMessage, long timestamp);
 
     @Query("DELETE FROM conversations")
     void clearAll();

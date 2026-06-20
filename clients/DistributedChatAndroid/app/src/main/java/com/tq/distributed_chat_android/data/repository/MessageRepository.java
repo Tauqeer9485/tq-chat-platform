@@ -57,6 +57,17 @@ public class MessageRepository {
         });
     }
 
+    public void updateUploadedMediaUrl(String clientMessageId, String localOrRemotePath, ChatMessage.MessageStatus newStatus) {
+        executorService.execute(() -> {
+            ChatMessage message = messageDao.getMessageByClientMId(clientMessageId);
+            if (message != null) {
+                message.setMediaUrl(localOrRemotePath);
+                message.setStatus(newStatus);
+                messageDao.updateMessage(message);
+            }
+        });
+    }
+
     public LiveData<List<ChatMessage>> getMessagesForConversation(String conversationId) {
         return messageDao.getMessagesForConversation(conversationId);
     }

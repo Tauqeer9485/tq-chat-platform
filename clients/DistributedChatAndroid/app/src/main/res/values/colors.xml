@@ -4,4 +4,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="text_gray">#666666</color>
     <color name="whatsapp_green">#00A884</color>
+    <color name="msg_timestamp">#F4F4F9</color>
 </resources>

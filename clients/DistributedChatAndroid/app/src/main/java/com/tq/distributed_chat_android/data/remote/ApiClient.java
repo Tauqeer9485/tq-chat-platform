@@ -9,10 +9,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
     private static final String BASE_URL = BuildConfig.API_URL;
+    private static final String MEDIA_BASE_URL = BuildConfig.MEDIA_URL;
     private static Retrofit retrofit = null;
-    private static String authToken = null;
+    private static Retrofit mediaRetrofit = null;
 
-    public static Retrofit getClient() {
+    public static synchronized Retrofit getClient() {
         if (retrofit == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -30,11 +31,28 @@ public class ApiClient {
         return retrofit;
     }
 
+    public static synchronized Retrofit getMediaClient() {
+        if (mediaRetrofit == null) {
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .addInterceptor(logging)
+                    .build();
+            mediaRetrofit = new Retrofit.Builder()
+                    .baseUrl(MEDIA_BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(client)
+                    .build();
+        }
+        return mediaRetrofit;
+    }
+
     public static AuthApiService getAuthService() {
         return getClient().create(AuthApiService.class);
     }
 
-    public static void setAuthToken(String token) {
-        authToken = token;
+    public static MediaApiService getMediaService() {
+        return getMediaClient().create(MediaApiService.class);
     }
 }

@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.tq.distributed_chat_android"
-        minSdk = 24
+        minSdk = 23
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -27,9 +27,11 @@ android {
 
         val apiUrl = properties.getProperty("API_URL") ?: "\"http://10.0.0.0:1234\""
         val wsUrl = properties.getProperty("CHATS_WS_URL") ?: "\"ws://10.0.0.0:2345\""
+        val mediaUrl = properties.getProperty("MEDIA_URL") ?: "\"ws://10.0.0.0:3456\""
 
         buildConfigField("String", "API_URL", apiUrl)
         buildConfigField("String", "CHATS_WS_URL", wsUrl)
+        buildConfigField("String", "MEDIA_URL", mediaUrl)
     }
 
     buildTypes {
@@ -58,6 +60,11 @@ dependencies {
     implementation(libs.material)
     implementation(libs.constraintlayout)
     implementation(libs.activity)
+
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.camerax.video)
 
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.gson)

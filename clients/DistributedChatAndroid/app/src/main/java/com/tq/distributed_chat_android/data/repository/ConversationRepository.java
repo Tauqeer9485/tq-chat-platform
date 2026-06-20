@@ -48,6 +48,13 @@ public final class ConversationRepository {
         });
     }
 
+    public void updateLastMessage(String conversationId, String lastMessage, long timestamp) {
+        if (conversationId == null) return;
+        executorService.execute(() -> {
+            conversationDao.updateLastMessage(conversationId, lastMessage, timestamp);
+        });
+    }
+
     public boolean exists(String conversationId) {
         if (conversationId == null) return false;
         Conversation convo = conversationDao.getConversationById(conversationId);
