@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import com.tq.distributed_chat_android.data.local.AppDatabase;
 import com.tq.distributed_chat_android.data.local.MessageDao;
 import com.tq.distributed_chat_android.data.model.ChatMessage;
+import com.tq.distributed_chat_android.data.model.MediaMetadata;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -61,7 +62,9 @@ public class MessageRepository {
         executorService.execute(() -> {
             ChatMessage message = messageDao.getMessageByClientMId(clientMessageId);
             if (message != null) {
-                message.setMediaUrl(localOrRemotePath);
+                if (message.getMediaMetadata() == null) {
+                    message.setMediaMetadata(new MediaMetadata());
+                }
                 message.setStatus(newStatus);
                 messageDao.updateMessage(message);
             }

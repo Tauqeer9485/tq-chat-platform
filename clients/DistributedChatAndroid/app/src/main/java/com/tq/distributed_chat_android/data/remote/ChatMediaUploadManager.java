@@ -1,20 +1,25 @@
 package com.tq.distributed_chat_android.data.remote;
 
 import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.tq.distributed_chat_android.data.model.AttachmentType;
 import com.tq.distributed_chat_android.data.model.ChatMessage;
+import com.tq.distributed_chat_android.data.model.MediaMetadata;
 import com.tq.distributed_chat_android.data.remote.dto.MediaUploadResponse;
 import com.tq.distributed_chat_android.data.remote.dto.TokenExchangeRequest;
 import com.tq.distributed_chat_android.data.remote.dto.TokenExchangeResponse;
 import com.tq.distributed_chat_android.data.repository.MediaRepository;
 import com.tq.distributed_chat_android.data.repository.MessageRepository;
+import com.tq.distributed_chat_android.data.mapper.MessageMapper;
+import com.tq.distributed_chat_android.data.protocol.chat.MessagePacket;
 
 import java.util.Collections;
+import java.util.UUID;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -28,7 +33,6 @@ public class ChatMediaUploadManager {
     private final ChatWebSocketManager webSocketManager;
     private final MessageRepository messageRepository;
 
-
     public ChatMediaUploadManager(Context context, MediaRepository mediaRepository,
                                   ChatWebSocketManager webSocketManager, MessageRepository messageRepository) {
         this.context = context.getApplicationContext();
@@ -37,18 +41,17 @@ public class ChatMediaUploadManager {
         this.messageRepository = messageRepository;
     }
 
-    public void processMediaMessageSend(Uri fileUri, String conversationId, String currentUserId, String longLivedToken) {
+    public void processMediaMessageSend(MediaUploadTask task, String conversationId, String currentUserId, String longLivedToken) {
         String authHeader = "Bearer " + longLivedToken;
         TokenExchangeRequest requestPayload = new TokenExchangeRequest(Collections.singletonList("media:write"));
 
         ApiClient.getAuthService().exchangeToken(authHeader, requestPayload)
                 .enqueue(new Callback<TokenExchangeResponse>() {
                     @Override
-                    public void onResponse(Call<TokenExchangeResponse> call, Response<TokenExchangeResponse> response) {
+                    public void onResponse(@NonNull Call<TokenExchangeResponse> call, @NonNull Response<TokenExchangeResponse> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             String shortLivedMediaToken = response.body().getToken();
-
-                            executeMediaUpload(fileUri, conversationId, currentUserId, shortLivedMediaToken);
+                            executeMediaUpload(task, conversationId, currentUserId, shortLivedMediaToken);
                         } else {
                             Log.e(TAG, "Media token exchange rejected. HTTP Code: " + response.code());
                             Toast.makeText(context, "Security verification failed for file attachment.", Toast.LENGTH_SHORT).show();
@@ -63,14 +66,13 @@ public class ChatMediaUploadManager {
                 });
     }
 
-    private void executeMediaUpload(Uri fileUri, String conversationId, String currentUserId, String shortLivedToken) {
-        mediaRepository.uploadMediaStream(fileUri, conversationId, currentUserId, shortLivedToken, new Callback<MediaUploadResponse>() {
+    private void executeMediaUpload(MediaUploadTask task, String conversationId, String currentUserId, String shortLivedToken) {
+        mediaRepository.uploadMediaStream(task.getFileUri(), conversationId, currentUserId, shortLivedToken, new Callback<MediaUploadResponse>() {
             @Override
-            public void onResponse(Call<MediaUploadResponse> call, Response<MediaUploadResponse> response) {
+            public void onResponse(@NonNull Call<MediaUploadResponse> call, @NonNull Response<MediaUploadResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     MediaUploadResponse uploadData = response.body();
-
-                    dispatchMediaMessageToRoomAndWebSocket(uploadData, fileUri.toString(), conversationId, currentUserId);
+                    dispatchMediaMessageToRoomAndWebSocket(task, uploadData, conversationId, currentUserId);
                 } else {
                     Log.e(TAG, "Media Server rejected file payload. Status: " + response.code());
                     Toast.makeText(context, "File upload rejected by remote cluster asset gateway.", Toast.LENGTH_SHORT).show();
@@ -85,15 +87,22 @@ public class ChatMediaUploadManager {
         });
     }
 
-    private void dispatchMediaMessageToRoomAndWebSocket(MediaUploadResponse uploadData, String fileUri, String conversationId, String currentUserId) {
+    private void dispatchMediaMessageToRoomAndWebSocket(MediaUploadTask task, MediaUploadResponse uploadData, String conversationId, String currentUserId) {
         long transientMessageId = System.currentTimeMillis();
-        String clientMsgId = "client_msg_" + java.util.UUID.randomUUID().toString();
+        String clientMsgId = "client_msg_" + UUID.randomUUID().toString();
 
         ChatMessage.ContentType determinedType = determineContentType(uploadData.getMimeType());
         long parsedSize = 0;
         try {
             parsedSize = Long.parseLong(uploadData.getSize());
         } catch (NumberFormatException ignored) {}
+
+        MediaMetadata metadata = task.getPreCalculatedMetadata();
+        metadata.setMediaId(uploadData.getMediaId());
+        metadata.setDownloadUrl(uploadData.getDownloadUrl());
+        metadata.setFileName(uploadData.getFileName());
+        metadata.setFileSize(parsedSize);
+        metadata.setMimeType(uploadData.getMimeType());
 
         ChatMessage mediaMessage = new ChatMessage(
                 transientMessageId,
@@ -104,28 +113,23 @@ public class ChatMediaUploadManager {
                 determinedType,
                 "[Media Attachment: " + uploadData.getFileName() + "]",
                 null,
-                uploadData.getDownloadUrl(),
-                uploadData.getFileName(),
-                parsedSize,
-                ChatMessage.MessageStatus.SENT
+                ChatMessage.MessageStatus.SENT,
+                AttachmentType.MEDIA,
+                metadata
         );
 
-        JsonObject packetWrapper = new Gson().toJsonTree(mediaMessage).getAsJsonObject();
-        packetWrapper.addProperty("packetType", "CHAT_MESSAGE");
-
-        if (webSocketManager != null) {
-            webSocketManager.sendMessage(packetWrapper.toString());
+        MessagePacket structuralPacket = MessageMapper.toPacket(mediaMessage);
+        if (webSocketManager != null && structuralPacket != null) {
+            webSocketManager.sendMessage(new Gson().toJson(structuralPacket));
         }
 
-        mediaMessage.setMediaUrl(fileUri);
+        mediaMessage.getMediaMetadata().setDownloadUrl(task.getFileUri().toString());
         messageRepository.insertMessage(mediaMessage);
     }
 
     private ChatMessage.ContentType determineContentType(String mimeType) {
         if (mimeType == null) return ChatMessage.ContentType.FILE;
-
         String primaryType = mimeType.split("/")[0].toLowerCase();
-
         try {
             return ChatMessage.ContentType.valueOf(primaryType.toUpperCase());
         } catch (IllegalArgumentException e) {

@@ -52,10 +52,12 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
                 public boolean areContentsTheSame(@NonNull ChatMessage oldItem, @NonNull ChatMessage newItem) {
                     boolean contentMatches = (oldItem.getContent() == null && newItem.getContent() == null) ||
                             (oldItem.getContent() != null && oldItem.getContent().equals(newItem.getContent()));
-                    boolean statusMatches = oldItem.getStatus().equals(newItem.getStatus());
 
-                    boolean mediaMatches = (oldItem.getMediaUrl() == null && newItem.getMediaUrl() == null) ||
-                            (oldItem.getMediaUrl() != null && oldItem.getMediaUrl().equals(newItem.getMediaUrl()));
+                    boolean statusMatches = oldItem.getStatus() != null && oldItem.getStatus().equals(newItem.getStatus());
+
+                    String oldUrl = oldItem.getMediaMetadata() != null ? oldItem.getMediaMetadata().getDownloadUrl() : null;
+                    String newUrl = newItem.getMediaMetadata() != null ? newItem.getMediaMetadata().getDownloadUrl() : null;
+                    boolean mediaMatches = (oldUrl == null && newUrl == null) || (oldUrl != null && oldUrl.equals(newUrl));
 
                     return contentMatches && statusMatches && mediaMatches && oldItem.getTimestamp() == newItem.getTimestamp();
                 }
@@ -151,16 +153,17 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         void bind(ChatMessage message, boolean isSentByUser, OnAudioMessageClickListener listener) {
             timeText.setText(formatTime(message.getTimestamp()));
 
-            String playableUrl = message.getMediaUrl();
-            if (playableUrl != null && playableUrl.contains("localhost")) {
-                playableUrl = playableUrl.replace("localhost", "192.168.43.248");
-            }
+            String playableUrl = message.getMediaMetadata() != null ? message.getMediaMetadata().getDownloadUrl() : null;
 
-            boolean isLocalFile = playableUrl != null && (
-                    playableUrl.startsWith("content://") ||
-                            playableUrl.startsWith("file://") ||
-                            playableUrl.startsWith("/")
-            );
+            boolean isLocalFile = playableUrl != null && (playableUrl.startsWith("content://") || playableUrl.startsWith("file://") || playableUrl.startsWith("/"));
+
+            int duration = (message.getMediaMetadata() != null && message.getMediaMetadata().getDurationSeconds() != null) ? message.getMediaMetadata().getDurationSeconds() : 0;
+
+            if (duration == 0) {
+                txtDuration.setText("");
+            } else {
+                txtDuration.setText(String.format(Locale.getDefault(), "%02d:%02d", duration / 60, duration % 60));
+            }
 
             if (statusImage != null) {
                 if (isSentByUser && message.getStatus() != null) {
@@ -292,30 +295,22 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
                 }
             }
 
-            String contentPath = message.getContent();
-            String remoteUrl = message.getMediaUrl();
+            String mediaUrl = message.getMediaMetadata() != null ? message.getMediaMetadata().getDownloadUrl() : null;
 
-            String fixedRemoteUrl = null;
-            if (remoteUrl != null) {
-                fixedRemoteUrl = remoteUrl.replace("localhost", "192.168.43.248");
-            }
-
-            boolean isLocalPath = contentPath != null && (contentPath.startsWith("content://") || contentPath.startsWith("file://") || contentPath.startsWith("/"));
+            boolean isLocalPath = mediaUrl != null && (mediaUrl.startsWith("content://") || mediaUrl.startsWith("file://") || mediaUrl.startsWith("/"));
 
             if (isLocalPath) {
                 Glide.with(itemView.getContext())
-                        .load(Uri.parse(contentPath))
+                        .load(Uri.parse(mediaUrl))
                         .transform(new RoundedCorners(16))
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)
-                        .error(Glide.with(itemView.getContext())
-                                .load(fixedRemoteUrl)
-                                .transform(new RoundedCorners(16))
-                                .placeholder(R.drawable.ic_gallery))
+                        .placeholder(R.drawable.ic_gallery)
+                        .error(R.drawable.ic_gallery)
                         .into(messageImage);
-            } else if (fixedRemoteUrl != null && !fixedRemoteUrl.isEmpty()) {
+            } else if (mediaUrl != null && !mediaUrl.isEmpty()) {
                 Glide.with(itemView.getContext())
-                        .load(fixedRemoteUrl)
+                        .load(mediaUrl)
                         .transform(new RoundedCorners(16))
                         .placeholder(R.drawable.ic_gallery)
                         .diskCacheStrategy(DiskCacheStrategy.ALL)

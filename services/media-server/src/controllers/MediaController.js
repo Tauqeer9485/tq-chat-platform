@@ -1,5 +1,6 @@
 import mediaService from '../services/MediaService.js';
 import { UploadMediaDto } from '../dtos/UploadMediaDto.js';
+import { MediaResponseDto } from '../dtos/MediaResponseDto.js';
 
 /**
  * Handles incoming HTTP requests related to media operations (upload, get, delete) and delegates business logic to MediaService.
@@ -23,8 +24,9 @@ class MediaController {
             
             const uploadDto = new UploadMediaDto(dtoPayload, req.file);
             const record = await mediaService.uploadMedia(uploadDto);
+            const response = new MediaResponseDto(record);
             
-            return res.status(201).json(record);
+            return res.status(201).json(response);
         } catch (error) {
             if (error.statusCode === 400) {
                 return res.status(400).json({ error: error.message, details: error.details });

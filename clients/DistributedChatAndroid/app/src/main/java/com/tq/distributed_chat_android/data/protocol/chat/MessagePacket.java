@@ -6,7 +6,6 @@ import com.tq.distributed_chat_android.data.protocol.type.MessageStatus;
 import com.tq.distributed_chat_android.data.protocol.type.PacketType;
 
 public class MessagePacket extends BasePacket {
-
     private long messageId;
     private String conversationId;
     private String senderId;
@@ -20,6 +19,7 @@ public class MessagePacket extends BasePacket {
     private String fileName;
     private long fileSize;
     private MessageStatus status;
+    private MessageAttachment attachment;
 
     public MessagePacket() {
         super(PacketType.CHAT_MESSAGE);
@@ -127,5 +127,13 @@ public class MessagePacket extends BasePacket {
 
     public void setStatus(MessageStatus status) {
         this.status = status;
+    }
+
+    public MessageAttachment getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(MessageAttachment attachment) {
+        this.attachment = attachment;
     }
 }

@@ -1,8 +1,10 @@
 package com.tq.distributed_chat_android.data.model;
 
+import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 import androidx.room.Ignore;
+import com.google.gson.annotations.SerializedName;
 
 @Entity(tableName = "messages")
 public class ChatMessage {
@@ -15,25 +17,32 @@ public class ChatMessage {
     }
 
     @PrimaryKey
+    @SerializedName("messageId")
     private final long messageId;
+    @SerializedName("conversationId")
     private final String conversationId;
+    @SerializedName("senderId")
     private final String senderId;
+    @SerializedName("clientMessageId")
     private final String clientMessageId;
+    @SerializedName("timestamp")
     private final long timestamp;
+    @SerializedName("contentType")
     private final ContentType contentType;
+    @SerializedName("content")
     private final String content;
-
+    @SerializedName("replyToMessageId")
     private final String replyToMessageId;
-    private  String mediaUrl;
-    private final String fileName;
-    private final long fileSize;
-
+    @SerializedName("status")
     private MessageStatus status;
+    @Embedded(prefix = "media_")
+    private MediaMetadata mediaMetadata;
+    private AttachmentType attachmentType;
 
     public ChatMessage(
             long messageId, String conversationId, String senderId, String clientMessageId,
             long timestamp, ContentType contentType, String content, String replyToMessageId,
-            String mediaUrl, String fileName, long fileSize, MessageStatus status
+            MessageStatus status
     ) {
         this.messageId = messageId;
         this.conversationId = conversationId;
@@ -43,9 +52,6 @@ public class ChatMessage {
         this.contentType = contentType;
         this.content = content;
         this.replyToMessageId = replyToMessageId;
-        this.mediaUrl = mediaUrl;
-        this.fileName = fileName;
-        this.fileSize = fileSize;
         this.status = status;
     }
 
@@ -59,9 +65,20 @@ public class ChatMessage {
                 System.currentTimeMillis(),
                 contentType,
                 content,
-                null, null, null, 0,
+                null,
                 MessageStatus.PENDING
         );
+    }
+
+    @Ignore
+    public ChatMessage(
+            long messageId, String conversationId, String senderId, String clientMessageId,
+            long timestamp, ContentType contentType, String content, String replyToMessageId,
+            MessageStatus status, AttachmentType attachmentType, MediaMetadata mediaMetadata
+    ) {
+        this(messageId, conversationId, senderId, clientMessageId, timestamp, contentType, content, replyToMessageId, status);
+        this.attachmentType = attachmentType;
+        this.mediaMetadata = mediaMetadata;
     }
 
     public long getMessageId() { return messageId; }
@@ -72,12 +89,25 @@ public class ChatMessage {
     public ContentType getContentType() { return contentType; }
     public String getContent() { return content; }
     public String getReplyToMessageId() { return replyToMessageId; }
-    public String getMediaUrl() { return mediaUrl; }
-    public String getFileName() { return fileName; }
-    public long getFileSize() { return fileSize; }
-    public MessageStatus getStatus() { return status; }
-
-    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
 
     public void setStatus(MessageStatus status) { this.status = status; }
+    public MessageStatus getStatus() {
+        return status;
+    }
+
+    public MediaMetadata getMediaMetadata() {
+        return mediaMetadata;
+    }
+
+    public AttachmentType getAttachmentType() {
+        return attachmentType;
+    }
+
+    public void setAttachmentType(AttachmentType attachmentType) {
+        this.attachmentType = attachmentType;
+    }
+
+    public void setMediaMetadata(MediaMetadata mediaMetadata) {
+        this.mediaMetadata = mediaMetadata;
+    }
 }

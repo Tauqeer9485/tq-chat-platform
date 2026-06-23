@@ -9,7 +9,7 @@ import androidx.room.TypeConverters;
 import com.tq.distributed_chat_android.data.model.ChatMessage;
 import com.tq.distributed_chat_android.data.model.Conversation;
 
-@Database(entities = {ChatMessage.class, Conversation.class}, version = 2, exportSchema = false)
+@Database(entities = {ChatMessage.class, Conversation.class}, version = 3, exportSchema = false)
 @TypeConverters({AppTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

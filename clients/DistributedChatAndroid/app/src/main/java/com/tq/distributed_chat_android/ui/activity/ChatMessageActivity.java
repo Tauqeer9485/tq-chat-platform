@@ -1,6 +1,7 @@
 package com.tq.distributed_chat_android.ui.activity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -19,7 +20,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -27,15 +27,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.tq.distributed_chat_android.R;
 import com.tq.distributed_chat_android.data.audio.AndroidAudioRecorderEngine;
 import com.tq.distributed_chat_android.data.audio.AudioRecorderEngine;
+import com.tq.distributed_chat_android.data.mapper.MessageMapper;
 import com.tq.distributed_chat_android.data.model.ChatMessage;
+import com.tq.distributed_chat_android.data.model.MediaMetadata;
+import com.tq.distributed_chat_android.data.protocol.chat.MessagePacket;
 import com.tq.distributed_chat_android.data.remote.ApiClient;
 import com.tq.distributed_chat_android.data.remote.ChatMediaUploadManager;
 import com.tq.distributed_chat_android.data.remote.ChatWebSocketManager;
 import com.tq.distributed_chat_android.data.remote.MediaApiService;
+import com.tq.distributed_chat_android.data.remote.MediaUploadTask;
 import com.tq.distributed_chat_android.data.repository.MediaRepository;
 import com.tq.distributed_chat_android.data.repository.MediaRepositoryImpl;
 import com.tq.distributed_chat_android.data.repository.MessageRepository;
@@ -50,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public class ChatMessageActivity extends AppCompatActivity {
     private EditText messageInput;
@@ -57,12 +61,10 @@ public class ChatMessageActivity extends AppCompatActivity {
     private View micWrapper, micBg;
     private RecyclerView messageRecyclerView;
     private ChatAdapter chatAdapter;
-    private List<ChatMessage> messageList;
     private final String currentUserId = SessionManager.getUserId();
     private String activeChatRoomId;
     private ChatWebSocketManager webSocketManager;
     private MessageRepository messageRepository;
-    private MediaRepository mediaRepository;
 
     private ActivityResultLauncher<String[]> mediaPickerLauncher;
     private ActivityResultLauncher<Intent> cameraLauncher;
@@ -92,7 +94,7 @@ public class ChatMessageActivity extends AppCompatActivity {
         webSocketManager = ChatWebSocketManager.getInstance(this, null);
         messageRepository = MessageRepository.getInstance(this);
         MediaApiService mediaApiService = ApiClient.getMediaService();
-        this.mediaRepository = new MediaRepositoryImpl(this, mediaApiService);
+        MediaRepository mediaRepository = new MediaRepositoryImpl(this, mediaApiService);
         mediaUploadManager = new ChatMediaUploadManager(this, mediaRepository, webSocketManager, messageRepository);
         audioRecorderEngine = new AndroidAudioRecorderEngine(this);
 
@@ -123,9 +125,7 @@ public class ChatMessageActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         messageRecyclerView.setLayoutManager(layoutManager);
 
-        messageList = new ArrayList<>();
-
-        chatAdapter = new ChatAdapter(currentUserId, (message, holder) -> handleAudioPlaybackPipeline(message, holder));
+        chatAdapter = new ChatAdapter(currentUserId, this::handleAudioPlaybackPipeline);
         messageRecyclerView.setAdapter(chatAdapter);
 
         setupPermissionContracts();
@@ -137,7 +137,7 @@ public class ChatMessageActivity extends AppCompatActivity {
     }
 
     private void handleAudioPlaybackPipeline(ChatMessage message, ChatAdapter.AudioViewHolder holder) {
-        String sourceUrl = message.getMediaUrl();
+        String sourceUrl = message.getMediaMetadata() != null ? message.getMediaMetadata().getDownloadUrl() : null;
 
         if (sourceUrl == null || sourceUrl.isEmpty()) {
             Toast.makeText(this, "Audio resource reference path unavailable.", Toast.LENGTH_SHORT).show();
@@ -168,7 +168,10 @@ public class ChatMessageActivity extends AppCompatActivity {
                     holder.downloadContainer.setVisibility(View.GONE);
                     Toast.makeText(ChatMessageActivity.this, "Voice note saved locally.", Toast.LENGTH_SHORT).show();
 
-                    message.setMediaUrl(localFileUri.toString());
+                    if (message.getMediaMetadata() == null) {
+                        message.setMediaMetadata(new MediaMetadata());
+                    }
+                    message.getMediaMetadata().setDownloadUrl(localFileUri.toString());
                     handleAudioPlaybackPipeline(message, holder);
                 }
 
@@ -253,7 +256,8 @@ public class ChatMessageActivity extends AppCompatActivity {
         }
 
         if (activeAudioHolder != null) {
-            String playableUrl = currentPlayingMessage != null ? currentPlayingMessage.getMediaUrl() : null;
+            String playableUrl = (currentPlayingMessage != null && currentPlayingMessage.getMediaMetadata() != null)
+                ? currentPlayingMessage.getMediaMetadata().getDownloadUrl() : null;
 
             boolean isLocalFile = playableUrl != null && (
                     playableUrl.startsWith("content://") ||
@@ -268,7 +272,6 @@ public class ChatMessageActivity extends AppCompatActivity {
             }
 
             activeAudioHolder.audioSeekBar.setProgress(0);
-            activeAudioHolder.txtDuration.setText("0:00");
             activeAudioHolder.downloadContainer.setVisibility(View.GONE);
             activeAudioHolder = null;
         }
@@ -299,7 +302,9 @@ public class ChatMessageActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             Log.e("Chat", "Permission mapping crash", e);
                         }
-                        processAndSendMedia(uri);
+
+                        MediaUploadTask task = new MediaUploadTask(uri, null);
+                        processAndSendMedia(task);
                     }
                 }
         );
@@ -310,7 +315,8 @@ public class ChatMessageActivity extends AppCompatActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         String uriString = result.getData().getStringExtra("image_uri");
                         if (uriString != null) {
-                            processAndSendMedia(Uri.parse(uriString));
+                            MediaUploadTask task = new MediaUploadTask(Uri.parse(uriString), null);
+                            processAndSendMedia(task);
                         }
                     }
                 }
@@ -336,7 +342,7 @@ public class ChatMessageActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.toString().trim().length() > 0) {
+                if (!s.toString().trim().isEmpty()) {
                     btnMic.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
                 } else {
@@ -365,15 +371,16 @@ public class ChatMessageActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setupAudioTouchPipeline() {
         btnMic.setOnClickListener(v -> {
-            if (!hasMicrophonePermission()) {
+            if (hasMicrophonePermission()) {
                 audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
             }
         });
 
         btnMic.setOnTouchListener((v, event) -> {
-            if (!hasMicrophonePermission()) {
+            if (hasMicrophonePermission()) {
                 return false;
             }
 
@@ -393,7 +400,6 @@ public class ChatMessageActivity extends AppCompatActivity {
                     if (!audioRecorderEngine.isRecording()) return true;
                     float trackDiffY = micStartY - event.getRawY();
 
-                    // Gesture-based slide cancellation tracking
                     if (trackDiffY > 250) {
                         executeAudioRecordStop(false);
                         Toast.makeText(this, "Recording Cancelled", Toast.LENGTH_SHORT).show();
@@ -412,8 +418,7 @@ public class ChatMessageActivity extends AppCompatActivity {
     }
 
     private boolean hasMicrophonePermission() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;
     }
 
     private void executeAudioRecordStart() {
@@ -451,18 +456,21 @@ public class ChatMessageActivity extends AppCompatActivity {
         long calculatedDuration = System.currentTimeMillis() - recordingStartTime;
         isRecordingInProgress = false;
 
-        // Strict Enterprise Guard Rule: Disallow microsecond spamming
         if (commitToSend && calculatedDuration < MINIMUM_AUDIO_DURATION_MS) {
             Toast.makeText(this, "Voice note too short. Hold to record.", Toast.LENGTH_SHORT).show();
             commitToSend = false;
         }
 
         if (commitToSend && activeAudioFile != null && activeAudioFile.exists()) {
-            // Extract precise duration from file headers to prevent temporal drift bugs
             long preciseDurationMs = extractTrueAudioDuration(activeAudioFile.getAbsolutePath(), calculatedDuration);
 
             Uri audioContentUri = Uri.fromFile(activeAudioFile);
-            processAndSendMedia(audioContentUri);
+
+            MediaMetadata audioSpecs = new MediaMetadata();
+            audioSpecs.setDurationSeconds((int) (preciseDurationMs / 1000));
+
+            MediaUploadTask task = new MediaUploadTask(audioContentUri, audioSpecs);
+            processAndSendMedia(task);
         } else {
             cleanupTemporaryAudioFile();
         }
@@ -495,7 +503,7 @@ public class ChatMessageActivity extends AppCompatActivity {
 
     private void sendTextMessage(String text) {
         long transientMessageId = System.currentTimeMillis();
-        String clientMsgId = "client_msg_" + java.util.UUID.randomUUID().toString();
+        String clientMsgId = "client_msg_" + UUID.randomUUID().toString();
 
         ChatMessage newTextMessage = new ChatMessage(
                 transientMessageId,
@@ -506,24 +514,21 @@ public class ChatMessageActivity extends AppCompatActivity {
                 ChatMessage.ContentType.TEXT,
                 text,
                 null,
-                null,
-                null,
-                0,
                 ChatMessage.MessageStatus.SENT
         );
 
         messageRepository.insertMessage(newTextMessage);
         messageInput.setText("");
 
-        JsonObject jsonObject = new Gson().toJsonTree(newTextMessage).getAsJsonObject();
-        jsonObject.addProperty("packetType", "CHAT_MESSAGE");
-        webSocketManager.sendMessage(jsonObject.toString());
+        MessagePacket structuralPacket = MessageMapper.toPacket(newTextMessage);
+
+        if (webSocketManager != null && structuralPacket != null) {
+            webSocketManager.sendMessage(new Gson().toJson(structuralPacket));
+        }
     }
 
-    private void processAndSendMedia(Uri uri) {
-        mediaUploadManager.processMediaMessageSend(
-                uri, activeChatRoomId, currentUserId, longLivedToken
-        );
+    private void processAndSendMedia(MediaUploadTask task) {
+        mediaUploadManager.processMediaMessageSend(task, activeChatRoomId, currentUserId, longLivedToken);
     }
 
     @Override

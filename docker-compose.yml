@@ -67,6 +67,10 @@ services:
       DB_PASSWORD: password
       JWKS_URI: http://messaging-server:8081/api/auth/.well-known/jwks.json
       JWT_AUDIENCE: media-service
+      JWT_ISSUER: tq-chat-platform
+      MEDIA_SERVER_URL: http://192.168.43.248:3001
+      MESSAGING_SERVER_URL: http://localhost:8081
+      URL_SIGNING_SECRET: super-secure-long-dev-secret-key-change-in-prod
     depends_on:
       - postgres
     networks:

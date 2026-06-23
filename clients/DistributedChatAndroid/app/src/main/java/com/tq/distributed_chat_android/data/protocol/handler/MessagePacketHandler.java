@@ -31,8 +31,17 @@ public class MessagePacketHandler implements PacketHandler<MessagePacket> {
 
         try {
             Log.d(TAG, "Processing MessagePacket for conversation: " + packet.getConversationId());
+            if (packet.getAttachment() != null) {
+                Log.d(TAG, "Attachment detected");
+            }
+            if (packet.getAttachment() != null &&
+                    packet.getAttachment().getMedia() != null) {
 
-            ChatMessage domainMessage = MessageMapper.mapToDomain(packet);
+                Log.d(TAG,
+                        "Media ID = " +
+                                packet.getAttachment().getMedia().getMediaId());
+            }
+            ChatMessage domainMessage = MessageMapper.toEntity(packet);
             if (domainMessage == null) return;
 
             if (domainMessage.getContentType() == ChatMessage.ContentType.AUDIO) {
@@ -43,12 +52,15 @@ public class MessagePacketHandler implements PacketHandler<MessagePacket> {
                     MediaDownloadEngine downloader = new MediaDownloadEngine(context);
                     String localFileName = "REC_AUDIO_" + domainMessage.getClientMessageId() + ".m4a";
 
-                    downloader.downloadFileAsync(domainMessage.getMediaUrl(), localFileName, new MediaDownloadEngine.DownloadCallback() {
+                    String remoteUrl = domainMessage.getMediaMetadata() != null ? domainMessage.getMediaMetadata().getDownloadUrl() : null;
+                    downloader.downloadFileAsync(remoteUrl, localFileName, new MediaDownloadEngine.DownloadCallback() {
                         @Override
                         public void onSuccess(Uri localFileUri) {
                             Log.d(TAG, "Auto-download complete. Swapping network link with local file URI path.");
 
-                            domainMessage.setMediaUrl(localFileUri.toString());
+                            if (domainMessage.getMediaMetadata() != null) {
+                                domainMessage.getMediaMetadata().setDownloadUrl(localFileUri.toString());
+                            }
 
                             saveMessageAndNotifyConversation(domainMessage);
                         }

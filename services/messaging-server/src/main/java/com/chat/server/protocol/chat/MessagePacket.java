@@ -25,6 +25,7 @@ public class MessagePacket extends BasePacket {
     private String fileName;
     private long fileSize;
     private MessageStatus status;
+    private MessageAttachment attachment;
 
     public MessagePacket() {
         super(PacketType.CHAT_MESSAGE);
@@ -132,5 +133,13 @@ public class MessagePacket extends BasePacket {
 
     public void setStatus(MessageStatus status) {
         this.status = status;
+    }
+
+    public MessageAttachment getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(MessageAttachment attachment) {
+        this.attachment = attachment;
     }
 }
